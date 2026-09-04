@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:wght@500;600&family=Great+Vibes&family=Marcellus&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+:root { font-family: 'Noto Sans JP', sans-serif; color: #f4f1ec; background: #11131a; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 960px; background: radial-gradient(circle at 82% 0%, #30314b 0, transparent 30rem), #11131a; }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+.app-shell { width: min(1440px, calc(100% - 64px)); margin: 0 auto; padding: 72px 0 96px; }
+.hero { margin-bottom: 42px; max-width: 760px; }
+.eyebrow { margin: 0 0 12px; color: #ccb47a; font: 500 12px/1.2 Marcellus, serif; letter-spacing: .18em; }
+h1 { margin: 0; font-size: clamp(36px, 4vw, 58px); line-height: 1.25; letter-spacing: -.04em; }
+h1 em { font-family: 'Cormorant Garamond', serif; color: #e5c787; font-style: italic; }
+.hero > p:last-child { color: #bfc2cc; font-size: 15px; line-height: 1.8; }
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) 350px; gap: 24px; align-items: start; }
+.editor-panel, .settings-panel, .result { border: 1px solid #343745; background: rgba(28, 30, 41, .88); box-shadow: 0 16px 60px rgba(0, 0, 0, .2); }
+.editor-panel { padding: 24px; }.settings-panel { padding: 24px; }.result { margin-top: 24px; padding: 24px; }
+.panel-heading { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; margin-bottom: 20px; }
+.panel-heading h2 { font-size: 16px; margin: 0; }.panel-heading span { color: #9b9eab; font-size: 11px; }
+.upload-zone { min-height: 430px; border: 1px dashed #666c80; display: grid; place-content: center; text-align: center; color: #e8e3d7; transition: background .2s, border-color .2s; cursor: pointer; }
+.upload-zone:hover { border-color: #d8ba7c; background: rgba(216, 186, 124, .07); }.upload-zone input, .replace-image input { display: none; }
+.upload-icon { display: grid; place-items: center; width: 48px; height: 48px; margin: 0 auto 14px; border: 1px solid #d8ba7c; border-radius: 50%; color: #d8ba7c; font-size: 28px; font-weight: 300; }
+.upload-zone strong { font-size: 17px; }.upload-zone small { margin-top: 7px; color: #a9adb9; font-size: 12px; }
+.stage-wrap { background: #090a0e; display: grid; place-items: center; min-height: 240px; overflow: hidden; }
+.image-stage { position: relative; width: 100%; max-height: 630px; touch-action: none; user-select: none; }.image-stage > img { display: block; width: 100%; height: 100%; object-fit: fill; }
+.crop-box { position: absolute; border: 2px solid #f1deaf; box-shadow: 0 0 0 9999px rgba(5, 6, 10, .58); cursor: move; }.crop-label { position: absolute; top: -27px; left: -2px; padding: 3px 7px; color: #25201a; background: #f1deaf; font: 700 11px/1.2 'Noto Sans JP'; }
+.handle { position: absolute; width: 13px; height: 13px; background: #fff4d6; border: 1px solid #463c2b; z-index: 2; }.handle-n, .handle-s { left: calc(50% - 6px); cursor: ns-resize; }.handle-e, .handle-w { top: calc(50% - 6px); cursor: ew-resize; }.handle-n { top: -7px; }.handle-s { bottom: -7px; }.handle-e { right: -7px; }.handle-w { left: -7px; }.handle-ne, .handle-nw { top: -7px; }.handle-se, .handle-sw { bottom: -7px; }.handle-ne, .handle-se { right: -7px; }.handle-nw, .handle-sw { left: -7px; }.handle-ne, .handle-sw { cursor: nesw-resize; }.handle-nw, .handle-se { cursor: nwse-resize; }
+.live-copyright { position: absolute; z-index: 1; color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,.9); font-size: clamp(11px, 1.8vw, 25px); line-height: 1; white-space: nowrap; pointer-events: none; }.live-copyright.top-left { top: 4%; left: 3%; }.live-copyright.top-right { top: 4%; right: 3%; }.live-copyright.bottom-left { bottom: 5%; left: 3%; }.live-copyright.bottom-right { right: 3%; bottom: 5%; }.font-greatVibes { font-family: 'Great Vibes', cursive; }.font-allura { font-family: Allura, cursive; }.font-cormorant { font-family: 'Cormorant Garamond', serif; }.font-marcellus { font-family: Marcellus, serif; }
+.replace-image { display: inline-block; margin-top: 14px; color: #d8ba7c; font-size: 13px; cursor: pointer; }.replace-image:hover { text-decoration: underline; }.error-message { color: #ffaaa2; font-size: 13px; margin: 14px 0 0; }
+fieldset { border: 0; padding: 0; margin: 0 0 25px; } fieldset:disabled { opacity: .4; } legend { margin-bottom: 10px; color: #bfc2cc; font-size: 12px; }.choice-card { display: block; border: 1px solid #454858; padding: 12px; margin-bottom: 8px; cursor: pointer; }.choice-card:has(input:checked) { border-color: #d8ba7c; background: rgba(216, 186, 124, .08); }.choice-card input { margin: 0 8px 0 0; accent-color: #d8ba7c; }.choice-card span { font-size: 13px; }.choice-card small { display: block; margin: 6px 0 0 21px; color: #abb0bc; font: 11px/1.5 Marcellus, serif; }
+.position-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }.position-grid button { padding: 9px 5px; border: 1px solid #454858; color: #d4d6dc; background: transparent; font-size: 12px; }.position-grid button.selected { border-color: #d8ba7c; color: #f2d99f; background: rgba(216, 186, 124, .1); }.settings-panel select { width: 100%; padding: 10px; border: 1px solid #454858; border-radius: 0; color: #f1f0ed; background: #242733; font-size: 12px; }.generate-button, .download-button { display: block; width: 100%; padding: 13px 16px; border: 0; text-align: center; color: #29231b; background: #e1c385; font-weight: 700; text-decoration: none; transition: opacity .2s; }.generate-button:disabled { cursor: not-allowed; opacity: .42; }.download-button { margin-top: 10px; color: #f4f1ec; background: #426c5b; }.download-button:hover { filter: brightness(1.12); }
+.result img { display: block; width: min(100%, 900px); margin: auto; }
+@media (max-width: 1050px) { .app-shell { width: min(100% - 40px, 900px); }.workspace { grid-template-columns: 1fr; }.settings-panel { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 20px; }.settings-panel .panel-heading, .generate-button, .download-button { grid-column: 1 / -1; } }
