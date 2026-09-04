@@ -31,6 +31,8 @@ jobs:
         run: npm run build
       - name: Pages を準備
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - name: 成果物をアップロード
         uses: actions/upload-pages-artifact@v3
         with:
