@@ -2,6 +2,7 @@ import { ChangeEvent, PointerEvent as ReactPointerEvent, useEffect, useRef, useS
 
 const ASPECT = 16 / 9
 const COPYRIGHTS = {
+  none: '',
   short: '© SQUARE ENIX',
   full: '(C) SQUARE ENIX CO., LTD. All Rights Reserved',
 } as const
@@ -173,16 +174,18 @@ function App() {
       context.drawImage(source, crop.x, crop.y, crop.width, crop.height, 0, 0, width, height)
 
       const padding = Math.max(22, Math.round(width * 0.025))
-      const fontSize = Math.max(19, Math.round(width * (copyright === 'full' ? 0.025 : 0.035)))
-      context.font = `${fontSize}px "${FONTS[font].family}"`
-      context.fillStyle = '#ffffff'
-      context.shadowColor = 'rgba(0, 0, 0, 0.82)'
-      context.shadowBlur = Math.max(3, Math.round(fontSize * 0.14))
-      context.shadowOffsetX = Math.max(1, Math.round(fontSize * 0.06))
-      context.shadowOffsetY = Math.max(1, Math.round(fontSize * 0.06))
-      context.textAlign = position.includes('right') ? 'right' : 'left'
-      context.textBaseline = position.includes('bottom') ? 'bottom' : 'top'
-      context.fillText(COPYRIGHTS[copyright], position.includes('right') ? width - padding : padding, position.includes('bottom') ? height - padding : padding)
+      const fontSize = Math.max(14, Math.round(width * (copyright === 'full' ? 0.018 : 0.025)))
+      if (copyright !== 'none') {
+        context.font = `${fontSize}px "${FONTS[font].family}"`
+        context.fillStyle = '#ffffff'
+        context.shadowColor = 'rgba(0, 0, 0, 0.82)'
+        context.shadowBlur = Math.max(3, Math.round(fontSize * 0.14))
+        context.shadowOffsetX = Math.max(1, Math.round(fontSize * 0.06))
+        context.shadowOffsetY = Math.max(1, Math.round(fontSize * 0.06))
+        context.textAlign = position.includes('right') ? 'right' : 'left'
+        context.textBaseline = position.includes('bottom') ? 'bottom' : 'top'
+        context.fillText(COPYRIGHTS[copyright], position.includes('right') ? width - padding : padding, position.includes('bottom') ? height - padding : padding)
+      }
 
       const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(result => result ? resolve(result) : reject(new Error('PNG の生成に失敗しました。')), 'image/png'))
       discardOutput()
@@ -226,7 +229,7 @@ function App() {
                     <div className="crop-box" style={cropStyle} onPointerDown={(event) => beginDrag(event, 'move')}>
                       <div className="crop-label">16:9</div>
                       {(['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as const).map(handle => <div key={handle} className={`handle handle-${handle}`} onPointerDown={(event) => beginDrag(event, handle)} />)}
-                      <div className={`live-copyright ${position} font-${font}`}>{COPYRIGHTS[copyright]}</div>
+                      {copyright !== 'none' && <div className={`live-copyright ${position} font-${font}`}>{COPYRIGHTS[copyright]}</div>}
                     </div>
                   </>}
                 </div>
@@ -240,7 +243,7 @@ function App() {
         <aside className="settings-panel">
           <div className="panel-heading"><h2>2. コピーライト</h2><span>プレビューに即時反映</span></div>
           <fieldset disabled={!imageUrl}><legend>表記</legend>
-            {(Object.entries(COPYRIGHTS) as [CopyrightKey, string][]).map(([key, value]) => <label className="choice-card" key={key}><input type="radio" name="copyright" checked={copyright === key} onChange={() => changeSetting(setCopyright, key)} /><span>{key === 'short' ? '簡易表記' : '標準表記'}</span><small>{value}</small></label>)}
+            {(Object.entries(COPYRIGHTS) as [CopyrightKey, string][]).map(([key, value]) => <label className="choice-card" key={key}><input type="radio" name="copyright" checked={copyright === key} onChange={() => changeSetting(setCopyright, key)} /><span>{key === 'none' ? 'コピーライトなし（非推奨）' : key === 'short' ? '簡易表記' : '標準表記'}</span>{value && <small>{value}</small>}</label>)}
           </fieldset>
           <fieldset disabled={!imageUrl}><legend>表示位置</legend><div className="position-grid">
             {([{ key: 'top-left', label: '左上' }, { key: 'top-right', label: '右上' }, { key: 'bottom-left', label: '左下' }, { key: 'bottom-right', label: '右下' }] as { key: Position; label: string }[]).map(item => <button type="button" key={item.key} className={position === item.key ? 'selected' : ''} onClick={() => changeSetting(setPosition, item.key)}>{item.label}</button>)}
