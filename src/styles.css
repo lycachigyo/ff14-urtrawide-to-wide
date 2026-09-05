@@ -8,7 +8,7 @@ button { cursor: pointer; }
 .app-shell { width: min(1440px, calc(100% - 64px)); margin: 0 auto; padding: 72px 0 96px; }
 .hero { margin-bottom: 42px; max-width: 760px; }
 .eyebrow { margin: 0 0 12px; color: #ccb47a; font: 500 12px/1.2 Marcellus, serif; letter-spacing: .18em; }
-h1 { margin: 0; font-size: clamp(36px, 4vw, 58px); line-height: 1.25; letter-spacing: -.04em; }
+h1 { margin: 0; font-size: clamp(36px, 4vw, 58px); line-height: 1.25; letter-spacing: -.04em; white-space: nowrap; }
 h1 em { font-family: 'Cormorant Garamond', serif; color: #e5c787; font-style: italic; }
 .hero > p:last-child { color: #bfc2cc; font-size: 15px; line-height: 1.8; }
 .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 350px; gap: 24px; align-items: start; }
