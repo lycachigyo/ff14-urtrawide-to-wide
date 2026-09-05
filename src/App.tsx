@@ -250,7 +250,7 @@ function App() {
             {([{ key: 'top-left', label: '左上' }, { key: 'top-right', label: '右上' }, { key: 'bottom-left', label: '左下' }, { key: 'bottom-right', label: '右下' }] as { key: Position; label: string }[]).map(item => <button type="button" key={item.key} className={position === item.key ? 'selected' : ''} onClick={() => changeSetting(setPosition, item.key)}>{item.label}</button>)}
           </div></fieldset>
           <fieldset disabled={!imageUrl}><legend>フォント</legend><select value={font} onChange={(event) => changeSetting(setFont, event.target.value as FontKey)}>{Object.entries(FONTS).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}</select></fieldset>
-          <fieldset disabled={!imageUrl || copyright === 'none'}><legend>文字サイズ <output>{copyrightSize}%</output></legend><input className="size-slider" type="range" min="40" max="100" value={copyrightSize} onChange={(event) => changeSetting(setCopyrightSize, Number(event.target.value))} aria-label="コピーライトの文字サイズ" /></fieldset>
+          <fieldset disabled={!imageUrl || copyright === 'none'}><legend>文字サイズ <output>{copyrightSize}%</output></legend><input className="size-slider" type="range" min="40" max="100" step="1" value={copyrightSize} onInput={(event) => changeSetting(setCopyrightSize, event.currentTarget.valueAsNumber)} aria-label="コピーライトの文字サイズ" /></fieldset>
           <button className="generate-button" type="button" disabled={!imageUrl || !crop || Boolean(outputUrl) || isGenerating} onClick={generate}>{isGenerating ? 'PNG を生成中…' : outputUrl ? 'PNG を生成しました' : 'トリミングして PNG を生成'}</button>
           {outputUrl && <a className="download-button" href={outputUrl} download="ff14-screenshot-16x9.png">PNG をダウンロード</a>}
         </aside>
