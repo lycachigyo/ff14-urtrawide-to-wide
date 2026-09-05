@@ -37,6 +37,7 @@ function App() {
   const [copyright, setCopyright] = useState<CopyrightKey>('short')
   const [position, setPosition] = useState<Position>('bottom-right')
   const [font, setFont] = useState<FontKey>('greatVibes')
+  const [copyrightSize, setCopyrightSize] = useState(100)
   const [outputUrl, setOutputUrl] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -174,7 +175,7 @@ function App() {
       context.drawImage(source, crop.x, crop.y, crop.width, crop.height, 0, 0, width, height)
 
       const padding = Math.max(22, Math.round(width * 0.025))
-      const fontSize = Math.max(14, Math.round(width * (copyright === 'full' ? 0.018 : 0.025)))
+      const fontSize = Math.max(8, Math.round(width * (copyright === 'full' ? 0.018 : 0.025) * (copyrightSize / 100)))
       if (copyright !== 'none') {
         context.font = `${fontSize}px "${FONTS[font].family}"`
         context.fillStyle = '#ffffff'
@@ -229,7 +230,7 @@ function App() {
                     <div className="crop-box" style={cropStyle} onPointerDown={(event) => beginDrag(event, 'move')}>
                       <div className="crop-label">16:9</div>
                       {(['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as const).map(handle => <div key={handle} className={`handle handle-${handle}`} onPointerDown={(event) => beginDrag(event, handle)} />)}
-                      {copyright !== 'none' && <div className={`live-copyright ${position} font-${font}`}>{COPYRIGHTS[copyright]}</div>}
+                      {copyright !== 'none' && <div className={`live-copyright ${position} font-${font}`} style={{ '--copyright-scale': copyrightSize / 100 } as React.CSSProperties}>{COPYRIGHTS[copyright]}</div>}
                     </div>
                   </>}
                 </div>
@@ -249,6 +250,7 @@ function App() {
             {([{ key: 'top-left', label: '左上' }, { key: 'top-right', label: '右上' }, { key: 'bottom-left', label: '左下' }, { key: 'bottom-right', label: '右下' }] as { key: Position; label: string }[]).map(item => <button type="button" key={item.key} className={position === item.key ? 'selected' : ''} onClick={() => changeSetting(setPosition, item.key)}>{item.label}</button>)}
           </div></fieldset>
           <fieldset disabled={!imageUrl}><legend>フォント</legend><select value={font} onChange={(event) => changeSetting(setFont, event.target.value as FontKey)}>{Object.entries(FONTS).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}</select></fieldset>
+          <fieldset disabled={!imageUrl || copyright === 'none'}><legend>文字サイズ <output>{copyrightSize}%</output></legend><input className="size-slider" type="range" min="40" max="100" value={copyrightSize} onChange={(event) => changeSetting(setCopyrightSize, Number(event.target.value))} aria-label="コピーライトの文字サイズ" /></fieldset>
           <button className="generate-button" type="button" disabled={!imageUrl || !crop || Boolean(outputUrl) || isGenerating} onClick={generate}>{isGenerating ? 'PNG を生成中…' : outputUrl ? 'PNG を生成しました' : 'トリミングして PNG を生成'}</button>
           {outputUrl && <a className="download-button" href={outputUrl} download="ff14-screenshot-16x9.png">PNG をダウンロード</a>}
         </aside>
