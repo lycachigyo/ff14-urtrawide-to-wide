@@ -210,7 +210,7 @@ function App() {
       <header className="hero">
         <p className="eyebrow">FFXIV SCREENSHOT EDITOR</p>
         <h1>ウルトラワイドを、<em>ちょうどいい</em> 16:9へ。</h1>
-        <p>画像はあなたのブラウザ内だけで処理されます。外部へアップロードされることはありません。</p>
+        <p>画像はどこにも保存されないので安心して下さい。</p>
       </header>
 
       <section className="workspace" aria-label="スクリーンショット編集">
