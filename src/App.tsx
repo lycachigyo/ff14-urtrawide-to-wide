@@ -17,6 +17,7 @@ const FONTS = {
 type CopyrightKey = keyof typeof COPYRIGHTS
 type FontKey = keyof typeof FONTS
 type Position = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+type OutputMode = 'single' | 'triple'
 type Handle = 'move' | 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
 type Crop = { x: number; y: number; width: number; height: number }
 type Drag = { handle: Handle; startX: number; startY: number; crop: Crop } | null
@@ -38,7 +39,8 @@ function App() {
   const [position, setPosition] = useState<Position>('bottom-right')
   const [font, setFont] = useState<FontKey>('greatVibes')
   const [copyrightSize, setCopyrightSize] = useState(100)
-  const [outputUrl, setOutputUrl] = useState<string | null>(null)
+  const [outputMode, setOutputMode] = useState<OutputMode>('single')
+  const [outputUrls, setOutputUrls] = useState<string[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [isDraggingFile, setIsDraggingFile] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -47,11 +49,11 @@ function App() {
 
   useEffect(() => { dragRef.current = drag }, [drag])
   useEffect(() => () => { if (imageUrl) URL.revokeObjectURL(imageUrl) }, [imageUrl])
-  useEffect(() => () => { if (outputUrl) URL.revokeObjectURL(outputUrl) }, [outputUrl])
+  useEffect(() => () => { outputUrls.forEach(url => URL.revokeObjectURL(url)) }, [outputUrls])
 
   const discardOutput = () => {
-    if (outputUrl) URL.revokeObjectURL(outputUrl)
-    setOutputUrl(null)
+    outputUrls.forEach(url => URL.revokeObjectURL(url))
+    setOutputUrls([])
   }
 
   const updateCrop = (next: Crop) => {
@@ -205,9 +207,22 @@ function App() {
         context.fillText(COPYRIGHTS[copyright], position.includes('right') ? width - padding : padding, position.includes('bottom') ? height - padding : padding)
       }
 
-      const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(result => result ? resolve(result) : reject(new Error('PNG の生成に失敗しました。')), 'image/png'))
+      const canvases = outputMode === 'triple'
+        ? [0, 1, 2].map(index => {
+            const startX = Math.round((width * index) / 3)
+            const endX = Math.round((width * (index + 1)) / 3)
+            const part = document.createElement('canvas')
+            part.width = endX - startX
+            part.height = height
+            const partContext = part.getContext('2d')
+            if (!partContext) throw new Error('分割画像の作成に失敗しました。')
+            partContext.drawImage(canvas, startX, 0, part.width, height, 0, 0, part.width, height)
+            return part
+          })
+        : [canvas]
+      const blobs = await Promise.all(canvases.map(part => new Promise<Blob>((resolve, reject) => part.toBlob(result => result ? resolve(result) : reject(new Error('PNG の生成に失敗しました。')), 'image/png'))))
       discardOutput()
-      setOutputUrl(URL.createObjectURL(blob))
+      setOutputUrls(blobs.map(blob => URL.createObjectURL(blob)))
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'PNG の生成に失敗しました。')
     } finally {
@@ -246,6 +261,7 @@ function App() {
                   {crop && <>
                     <div className="crop-box" style={cropStyle} onPointerDown={(event) => beginDrag(event, 'move')}>
                       <div className="crop-label">16:9</div>
+                      {outputMode === 'triple' && <><div className="split-guide split-guide-first" /><div className="split-guide split-guide-second" /></>}
                       {(['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as const).map(handle => <div key={handle} className={`handle handle-${handle}`} onPointerDown={(event) => beginDrag(event, handle)} />)}
                       {copyright !== 'none' && <div className={`live-copyright ${position} font-${font}`} style={{ '--copyright-scale': copyrightSize / 100 } as React.CSSProperties}>{COPYRIGHTS[copyright]}</div>}
                     </div>
@@ -259,7 +275,11 @@ function App() {
         </div>
 
         <aside className="settings-panel">
-          <div className="panel-heading"><h2>2. コピーライト</h2><span>プレビューに即時反映</span></div>
+          <div className="panel-heading"><h2>2. 出力設定</h2><span>プレビューに即時反映</span></div>
+          <fieldset disabled={!imageUrl}><legend>出力モード</legend><div className="mode-grid">
+            <button type="button" className={outputMode === 'single' ? 'selected' : ''} onClick={() => changeSetting(setOutputMode, 'single')}>通常（1枚）</button>
+            <button type="button" className={outputMode === 'triple' ? 'selected' : ''} onClick={() => changeSetting(setOutputMode, 'triple')}>横3分割（3枚）</button>
+          </div></fieldset>
           <fieldset disabled={!imageUrl}><legend>表記</legend>
             {(Object.entries(COPYRIGHTS) as [CopyrightKey, string][]).map(([key, value]) => <label className="choice-card" key={key}><input type="radio" name="copyright" checked={copyright === key} onChange={() => changeSetting(setCopyright, key)} /><span>{key === 'none' ? 'コピーライトなし（非推奨）' : key === 'short' ? '簡易表記' : '標準表記'}</span>{value && <small>{value}</small>}</label>)}
           </fieldset>
@@ -268,11 +288,12 @@ function App() {
           </div></fieldset>
           <fieldset disabled={!imageUrl}><legend>フォント</legend><select value={font} onChange={(event) => changeSetting(setFont, event.target.value as FontKey)}>{Object.entries(FONTS).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}</select></fieldset>
           <fieldset disabled={!imageUrl || copyright === 'none'}><legend>文字サイズ <output>{copyrightSize}%</output></legend><input className="size-slider" type="range" min="40" max="100" step="1" value={copyrightSize} onInput={(event) => changeSetting(setCopyrightSize, event.currentTarget.valueAsNumber)} aria-label="コピーライトの文字サイズ" /></fieldset>
-          <button className="generate-button" type="button" disabled={!imageUrl || !crop || Boolean(outputUrl) || isGenerating} onClick={generate}>{isGenerating ? 'PNG を生成中…' : outputUrl ? 'PNG を生成しました' : 'トリミングして PNG を生成'}</button>
-          {outputUrl && <a className="download-button" href={outputUrl} download="ff14-screenshot-16x9.png">PNG をダウンロード</a>}
+          <button className="generate-button" type="button" disabled={!imageUrl || !crop || outputUrls.length > 0 || isGenerating} onClick={generate}>{isGenerating ? 'PNG を生成中…' : outputUrls.length > 0 ? 'PNG を生成しました' : outputMode === 'triple' ? '3枚の PNG を生成' : 'トリミングして PNG を生成'}</button>
+          {outputUrls.length === 1 && <a className="download-button" href={outputUrls[0]} download="ff14-screenshot-16x9.png">PNG をダウンロード</a>}
+          {outputUrls.length === 3 && <div className="download-list">{outputUrls.map((url, index) => <a className="download-button" href={url} download={`ff14-screenshot-16x9-${index + 1}.png`} key={url}>{index + 1}枚目をダウンロード</a>)}</div>}
         </aside>
       </section>
-      {outputUrl && <section className="result"><div className="panel-heading"><h2>生成結果</h2><span>元解像度・PNG</span></div><img src={outputUrl} alt="生成した16対9の画像" /></section>}
+      {outputUrls.length > 0 && <section className="result"><div className="panel-heading"><h2>生成結果</h2><span>{outputUrls.length === 3 ? '横3分割・元解像度・PNG' : '元解像度・PNG'}</span></div><div className={`result-images ${outputUrls.length === 3 ? 'is-triple' : ''}`}>{outputUrls.map((url, index) => <figure key={url}><img src={url} alt={outputUrls.length === 3 ? `生成した分割画像 ${index + 1}枚目` : '生成した16対9の画像'} />{outputUrls.length === 3 && <figcaption>{index + 1}枚目</figcaption>}</figure>)}</div></section>}
     </main>
   )
 }
