@@ -1,4 +1,4 @@
-import { ChangeEvent, PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react'
+import { ChangeEvent, DragEvent as ReactDragEvent, PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react'
 
 const ASPECT = 16 / 9
 const COPYRIGHTS = {
@@ -40,6 +40,7 @@ function App() {
   const [copyrightSize, setCopyrightSize] = useState(100)
   const [outputUrl, setOutputUrl] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isDraggingFile, setIsDraggingFile] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<Drag>(null)
@@ -58,9 +59,7 @@ function App() {
     setCrop(next)
   }
 
-  const selectImage = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+  const loadImageFile = (file: File) => {
     if (!['image/png', 'image/jpeg'].includes(file.type)) {
       setError('PNG または JPEG 形式の画像を選択してください。')
       return
@@ -71,7 +70,25 @@ function App() {
     setImageSize({ width: 0, height: 0 })
     setCrop(null)
     setImageUrl(URL.createObjectURL(file))
+  }
+
+  const selectImage = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) loadImageFile(file)
     event.target.value = ''
+  }
+
+  const dragOverUpload = (event: ReactDragEvent<HTMLElement>) => {
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'copy'
+    setIsDraggingFile(true)
+  }
+
+  const dropImage = (event: ReactDragEvent<HTMLElement>) => {
+    event.preventDefault()
+    setIsDraggingFile(false)
+    const file = event.dataTransfer.files[0]
+    if (file) loadImageFile(file)
   }
 
   const loadImage = (event: React.SyntheticEvent<HTMLImageElement>) => {
@@ -217,9 +234,9 @@ function App() {
         <div className="editor-panel">
           <div className="panel-heading"><h2>1. スクリーンショット</h2><span>PNG / JPEG</span></div>
           {!imageUrl ? (
-            <label className="upload-zone">
+            <label className={`upload-zone${isDraggingFile ? ' is-dragging' : ''}`} onDragEnter={dragOverUpload} onDragOver={dragOverUpload} onDragLeave={() => setIsDraggingFile(false)} onDrop={dropImage}>
               <input type="file" accept="image/png,image/jpeg" onChange={selectImage} />
-              <span className="upload-icon">＋</span><strong>画像を選択</strong><small>FF14で撮影したスクリーンショットをここから読み込みます</small>
+              <span className="upload-icon">＋</span><strong>{isDraggingFile ? 'ここにドロップ' : '画像を選択'}</strong><small>クリックまたはドラッグ＆ドロップで読み込みます</small>
             </label>
           ) : (
             <>
