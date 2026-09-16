@@ -30,6 +30,12 @@ function initialCrop(width: number, height: number): Crop {
   return { x: (width - cropWidth) / 2, y: (height - cropHeight) / 2, width: cropWidth, height: cropHeight }
 }
 
+function createOutputFilePrefix() {
+  const now = new Date()
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return `ff14-screenshot-16x9-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+}
+
 function App() {
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 })
@@ -41,6 +47,7 @@ function App() {
   const [copyrightSize, setCopyrightSize] = useState(100)
   const [outputMode, setOutputMode] = useState<OutputMode>('single')
   const [outputUrls, setOutputUrls] = useState<string[]>([])
+  const [outputFilePrefix, setOutputFilePrefix] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [isDraggingFile, setIsDraggingFile] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -54,6 +61,7 @@ function App() {
   const discardOutput = () => {
     outputUrls.forEach(url => URL.revokeObjectURL(url))
     setOutputUrls([])
+    setOutputFilePrefix('')
   }
 
   const updateCrop = (next: Crop) => {
@@ -223,6 +231,7 @@ function App() {
       const blobs = await Promise.all(canvases.map(part => new Promise<Blob>((resolve, reject) => part.toBlob(result => result ? resolve(result) : reject(new Error('PNG の生成に失敗しました。')), 'image/png'))))
       discardOutput()
       setOutputUrls(blobs.map(blob => URL.createObjectURL(blob)))
+      setOutputFilePrefix(createOutputFilePrefix())
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'PNG の生成に失敗しました。')
     } finally {
@@ -289,8 +298,8 @@ function App() {
           <fieldset disabled={!imageUrl}><legend>フォント</legend><select value={font} onChange={(event) => changeSetting(setFont, event.target.value as FontKey)}>{Object.entries(FONTS).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}</select></fieldset>
           <fieldset disabled={!imageUrl || copyright === 'none'}><legend>文字サイズ <output>{copyrightSize}%</output></legend><input className="size-slider" type="range" min="40" max="100" step="1" value={copyrightSize} onInput={(event) => changeSetting(setCopyrightSize, event.currentTarget.valueAsNumber)} aria-label="コピーライトの文字サイズ" /></fieldset>
           <button className="generate-button" type="button" disabled={!imageUrl || !crop || outputUrls.length > 0 || isGenerating} onClick={generate}>{isGenerating ? 'PNG を生成中…' : outputUrls.length > 0 ? 'PNG を生成しました' : outputMode === 'triple' ? '3枚の PNG を生成' : 'トリミングして PNG を生成'}</button>
-          {outputUrls.length === 1 && <a className="download-button" href={outputUrls[0]} download="ff14-screenshot-16x9.png">PNG をダウンロード</a>}
-          {outputUrls.length === 3 && <div className="download-list">{outputUrls.map((url, index) => <a className="download-button" href={url} download={`ff14-screenshot-16x9-${index + 1}.png`} key={url}>{index + 1}枚目をダウンロード</a>)}</div>}
+          {outputUrls.length === 1 && <a className="download-button" href={outputUrls[0]} download={`${outputFilePrefix}.png`}>PNG をダウンロード</a>}
+          {outputUrls.length === 3 && <div className="download-list">{outputUrls.map((url, index) => <a className="download-button" href={url} download={`${outputFilePrefix}-${index + 1}.png`} key={url}>{index + 1}枚目をダウンロード</a>)}</div>}
         </aside>
       </section>
       {outputUrls.length > 0 && <section className="result"><div className="panel-heading"><h2>生成結果</h2><span>{outputUrls.length === 3 ? '横3分割・元解像度・PNG' : '元解像度・PNG'}</span></div><div className={`result-images ${outputUrls.length === 3 ? 'is-triple' : ''}`}>{outputUrls.map((url, index) => <figure key={url}><img src={url} alt={outputUrls.length === 3 ? `生成した分割画像 ${index + 1}枚目` : '生成した16対9の画像'} />{outputUrls.length === 3 && <figcaption>{index + 1}枚目</figcaption>}</figure>)}</div></section>}
