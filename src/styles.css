@@ -12,6 +12,8 @@ h1 { margin: 0; font-size: clamp(36px, 4vw, 58px); line-height: 1.25; letter-spa
 h1 em { font-family: 'Cormorant Garamond', serif; color: #e5c787; font-style: italic; }
 .hero > p:last-child { color: #bfc2cc; font-size: 15px; line-height: 1.8; }
 .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 350px; gap: 24px; align-items: start; }
+.workspace.is-portrait { grid-template-columns: minmax(420px, 560px) 350px; justify-content: center; }
+.workspace.is-portrait .stage-wrap { width: fit-content; max-width: 100%; min-height: 0; margin: 0 auto; background: transparent; }
 .editor-panel, .settings-panel, .result { border: 1px solid #343745; background: rgba(28, 30, 41, .88); box-shadow: 0 16px 60px rgba(0, 0, 0, .2); }
 .editor-panel { padding: 24px; }.settings-panel { padding: 24px; }.result { margin-top: 24px; padding: 24px; }
 .panel-heading { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; margin-bottom: 20px; }

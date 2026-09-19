@@ -265,6 +265,7 @@ function App() {
     width: `${(crop.width / imageSize.width) * 100}%`,
     height: `${(crop.height / imageSize.height) * 100}%`,
   } : undefined
+  const isPortraitImage = imageSize.height > imageSize.width
 
   return (
     <main className="app-shell">
@@ -274,7 +275,7 @@ function App() {
         <p>画像はどこにも保存されないので安心して下さい。</p>
       </header>
 
-      <section className="workspace" aria-label="スクリーンショット編集">
+      <section className={`workspace${isPortraitImage ? ' is-portrait' : ''}`} aria-label="スクリーンショット編集">
         <div className="editor-panel">
           <div className="panel-heading"><h2>1. スクリーンショット</h2><span>PNG / JPEG</span></div>
           {!imageUrl ? (
