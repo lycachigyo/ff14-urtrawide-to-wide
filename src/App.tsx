@@ -26,6 +26,9 @@ type Handle = 'move' | 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
 type Crop = { x: number; y: number; width: number; height: number }
 type Drag = { handle: Handle; startX: number; startY: number; crop: Crop } | null
 
+const LANDSCAPE_HANDLES = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as const
+const PORTRAIT_HANDLES = ['n', 's'] as const
+
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
 
 function initialCrop(width: number, height: number, aspect: number): Crop {
@@ -288,7 +291,7 @@ function App() {
                     <div className="crop-box" style={cropStyle} onPointerDown={(event) => beginDrag(event, 'move')}>
                       <div className="crop-label">{ASPECTS[aspectMode].shortLabel}</div>
                       {outputMode === 'triple' && <><div className="split-guide split-guide-first" /><div className="split-guide split-guide-second" /></>}
-                      {(['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as const).map(handle => <div key={handle} className={`handle handle-${handle}`} onPointerDown={(event) => beginDrag(event, handle)} />)}
+                      {(aspectMode === 'portrait' ? PORTRAIT_HANDLES : LANDSCAPE_HANDLES).map(handle => <div key={handle} className={`handle handle-${handle}`} onPointerDown={(event) => beginDrag(event, handle)} />)}
                       {copyright !== 'none' && <div className={`live-copyright ${position} font-${font}`} style={{ '--copyright-scale': copyrightSize / 100 } as React.CSSProperties}>{COPYRIGHTS[copyright]}</div>}
                     </div>
                   </>}
