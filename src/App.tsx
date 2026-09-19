@@ -1,6 +1,9 @@
 import { ChangeEvent, DragEvent as ReactDragEvent, PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react'
 
-const ASPECT = 16 / 9
+const ASPECTS = {
+  landscape: { label: '横 16:9', value: 16 / 9, shortLabel: '16:9' },
+  portrait: { label: '縦 9:16', value: 9 / 16, shortLabel: '9:16' },
+} as const
 const COPYRIGHTS = {
   none: '',
   short: '© SQUARE ENIX',
@@ -18,15 +21,16 @@ type CopyrightKey = keyof typeof COPYRIGHTS
 type FontKey = keyof typeof FONTS
 type Position = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
 type OutputMode = 'single' | 'triple'
+type AspectMode = keyof typeof ASPECTS
 type Handle = 'move' | 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
 type Crop = { x: number; y: number; width: number; height: number }
 type Drag = { handle: Handle; startX: number; startY: number; crop: Crop } | null
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
 
-function initialCrop(width: number, height: number): Crop {
-  const cropWidth = Math.min(width, height * ASPECT)
-  const cropHeight = cropWidth / ASPECT
+function initialCrop(width: number, height: number, aspect: number): Crop {
+  const cropWidth = Math.min(width, height * aspect)
+  const cropHeight = cropWidth / aspect
   return { x: (width - cropWidth) / 2, y: (height - cropHeight) / 2, width: cropWidth, height: cropHeight }
 }
 
@@ -45,6 +49,7 @@ function App() {
   const [position, setPosition] = useState<Position>('bottom-right')
   const [font, setFont] = useState<FontKey>('greatVibes')
   const [copyrightSize, setCopyrightSize] = useState(100)
+  const [aspectMode, setAspectMode] = useState<AspectMode>('landscape')
   const [outputMode, setOutputMode] = useState<OutputMode>('single')
   const [outputUrls, setOutputUrls] = useState<string[]>([])
   const [outputFilePrefix, setOutputFilePrefix] = useState('')
@@ -105,7 +110,9 @@ function App() {
     const { naturalWidth: width, naturalHeight: height } = event.currentTarget
     if (!width || !height) return
     setImageSize({ width, height })
-    setCrop(initialCrop(width, height))
+    const nextAspectMode: AspectMode = height > width ? 'portrait' : 'landscape'
+    setAspectMode(nextAspectMode)
+    setCrop(initialCrop(width, height, ASPECTS[nextAspectMode].value))
   }
 
   const beginDrag = (event: ReactPointerEvent<HTMLDivElement>, handle: Handle) => {
@@ -117,7 +124,8 @@ function App() {
   }
 
   const resizeCrop = (start: Crop, handle: Exclude<Handle, 'move'>, dx: number, dy: number): Crop => {
-    const minWidth = Math.min(180, imageSize.width, imageSize.height * ASPECT)
+    const aspect = ASPECTS[aspectMode].value
+    const minWidth = Math.min(180, imageSize.width, imageSize.height * aspect)
     const left = handle.includes('w')
     const right = handle.includes('e')
     const top = handle.includes('n')
@@ -128,13 +136,13 @@ function App() {
 
     if (left || right) {
       const horizontalDelta = (right ? 1 : -1) * dx
-      const verticalDelta = (top ? -1 : 1) * dy * ASPECT
+      const verticalDelta = (top ? -1 : 1) * dy * aspect
       const delta = top || bottom
         ? (Math.abs(horizontalDelta) > Math.abs(verticalDelta) ? horizontalDelta : verticalDelta)
         : horizontalDelta
       width = start.width + delta
     } else {
-      width = start.width + (bottom ? dy : -dy) * ASPECT
+      width = start.width + (bottom ? dy : -dy) * aspect
     }
 
     const anchorX = left ? start.x + start.width : start.x
@@ -144,8 +152,8 @@ function App() {
       : right
         ? imageSize.width - anchorX
         : imageSize.width
-    width = clamp(width, minWidth, Math.min(maxWidth, imageSize.height * ASPECT))
-    const height = width / ASPECT
+    width = clamp(width, minWidth, Math.min(maxWidth, imageSize.height * aspect))
+    const height = width / aspect
 
     if (left) x = anchorX - width
     else if (!(right || top || bottom)) x = start.x
@@ -181,6 +189,15 @@ function App() {
   const changeSetting = <T,>(setter: (value: T) => void, value: T) => {
     discardOutput()
     setter(value)
+  }
+
+  const changeAspectMode = (nextMode: AspectMode) => {
+    if (nextMode === aspectMode) return
+    discardOutput()
+    setAspectMode(nextMode)
+    if (imageSize.width && imageSize.height) {
+      setCrop(initialCrop(imageSize.width, imageSize.height, ASPECTS[nextMode].value))
+    }
   }
 
   const generate = async () => {
@@ -250,7 +267,7 @@ function App() {
     <main className="app-shell">
       <header className="hero">
         <p className="eyebrow">FFXIV SCREENSHOT EDITOR</p>
-        <h1>ウルトラワイドを、<em>ちょうどいい</em> 16:9へ。</h1>
+        <h1>ウルトラワイドを、<em>ちょうどいい</em> 比率へ。</h1>
         <p>画像はどこにも保存されないので安心して下さい。</p>
       </header>
 
@@ -269,7 +286,7 @@ function App() {
                   <img src={imageUrl} onLoad={loadImage} alt="読み込んだスクリーンショット" draggable={false} />
                   {crop && <>
                     <div className="crop-box" style={cropStyle} onPointerDown={(event) => beginDrag(event, 'move')}>
-                      <div className="crop-label">16:9</div>
+                      <div className="crop-label">{ASPECTS[aspectMode].shortLabel}</div>
                       {outputMode === 'triple' && <><div className="split-guide split-guide-first" /><div className="split-guide split-guide-second" /></>}
                       {(['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as const).map(handle => <div key={handle} className={`handle handle-${handle}`} onPointerDown={(event) => beginDrag(event, handle)} />)}
                       {copyright !== 'none' && <div className={`live-copyright ${position} font-${font}`} style={{ '--copyright-scale': copyrightSize / 100 } as React.CSSProperties}>{COPYRIGHTS[copyright]}</div>}
@@ -285,6 +302,9 @@ function App() {
 
         <aside className="settings-panel">
           <div className="panel-heading"><h2>2. 出力設定</h2><span>プレビューに即時反映</span></div>
+          <fieldset disabled={!imageUrl}><legend>切り抜き比率</legend><div className="mode-grid">
+            {(Object.entries(ASPECTS) as [AspectMode, typeof ASPECTS[AspectMode]][]).map(([key, item]) => <button type="button" className={aspectMode === key ? 'selected' : ''} onClick={() => changeAspectMode(key)} key={key}>{item.label}</button>)}
+          </div></fieldset>
           <fieldset disabled={!imageUrl}><legend>出力モード</legend><div className="mode-grid">
             <button type="button" className={outputMode === 'single' ? 'selected' : ''} onClick={() => changeSetting(setOutputMode, 'single')}>通常（1枚）</button>
             <button type="button" className={outputMode === 'triple' ? 'selected' : ''} onClick={() => changeSetting(setOutputMode, 'triple')}>横3分割（3枚）</button>
@@ -302,7 +322,7 @@ function App() {
           {outputUrls.length === 3 && <div className="download-list">{outputUrls.map((url, index) => <a className="download-button" href={url} download={`${outputFilePrefix}-${index + 1}.png`} key={url}>{index + 1}枚目をダウンロード</a>)}</div>}
         </aside>
       </section>
-      {outputUrls.length > 0 && <section className="result"><div className="panel-heading"><h2>生成結果</h2><span>{outputUrls.length === 3 ? '横3分割・元解像度・PNG' : '元解像度・PNG'}</span></div><div className={`result-images ${outputUrls.length === 3 ? 'is-triple' : ''}`}>{outputUrls.map((url, index) => <figure key={url}><img src={url} alt={outputUrls.length === 3 ? `生成した分割画像 ${index + 1}枚目` : '生成した16対9の画像'} />{outputUrls.length === 3 && <figcaption>{index + 1}枚目</figcaption>}</figure>)}</div></section>}
+      {outputUrls.length > 0 && <section className="result"><div className="panel-heading"><h2>生成結果</h2><span>{outputUrls.length === 3 ? `横3分割・${ASPECTS[aspectMode].shortLabel}・元解像度・PNG` : `${ASPECTS[aspectMode].shortLabel}・元解像度・PNG`}</span></div><div className={`result-images ${outputUrls.length === 3 ? 'is-triple' : ''}`}>{outputUrls.map((url, index) => <figure key={url}><img src={url} alt={outputUrls.length === 3 ? `生成した分割画像 ${index + 1}枚目` : `生成した${ASPECTS[aspectMode].shortLabel}の画像`} />{outputUrls.length === 3 && <figcaption>{index + 1}枚目</figcaption>}</figure>)}</div></section>}
     </main>
   )
 }
